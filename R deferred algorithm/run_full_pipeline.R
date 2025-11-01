@@ -110,51 +110,59 @@ if (exists("colors_needed")) {
   cat("(Coloring result unavailable. Check diagnostics output.)\n")
 }
 
-# Surface removal-based mitigation output
-removal_file <- "removal_suggestions.csv"
-if (file.exists(removal_file)) {
-  removal_plans <- read_csv(removal_file, show_col_types = FALSE)
+# Summarize the trade pipeline outputs so administrators can track changes
+if (file.exists("trade_proposals.csv")) {
+  trade_proposals <- read_csv("trade_proposals.csv", show_col_types = FALSE)
+  total_trades <- nrow(trade_proposals)
+  total_students_with_trades <- trade_proposals %>% distinct(student_id) %>% nrow()
 
-  cat("\n--- Removal Scenarios ---\n")
-  cat(sprintf("Feasible single removals found: %d\n", nrow(removal_plans)))
+  cat("\n--- Trade Proposals ---\n")
+  cat(sprintf("Total proposed switches: %d (covering %d students)\n",
+              total_trades, total_students_with_trades))
 
-  if (nrow(removal_plans) > 0) {
-    top_plans <- removal_plans %>%
-      arrange(slots_needed_after, desc(conflicts_resolved)) %>%
-      head(5)
+  # Highlight a few of the highest-improvement trades so the user can review quickly
+  top_trades <- trade_proposals %>%
+    arrange(desc(improvement)) %>%
+    head(5)
 
-    apply(top_plans, 1, function(row) {
-      cat(sprintf(
-        "  Student %s: drop %s → schedule needs %s slots (freed conflicts: %s)\n",
-        row[["student_id"]],
-        paste0(row[["drop_club_name"]], " (", row[["drop_club_id"]], ")"),
-        row[["slots_needed_after"]],
-        ifelse(nchar(row[["freed_clubs"]]) > 0, row[["freed_clubs"]], "none")
-      ))
-      if (!is.na(row[["suggested_alternatives"]]) && nchar(row[["suggested_alternatives"]]) > 0) {
-        cat(sprintf("    Suggested options: %s\n", row[["suggested_alternatives"]]))
-      }
+  if (nrow(top_trades) > 0) {
+    cat("Top proposed improvements:\n")
+    apply(top_trades, 1, function(row) {
+      cat(sprintf("  Student %s: swap %s → %s (Δrank +%s)\n",
+                  row[["student_id"]], row[["drop_club"]],
+                  row[["alternative_club"]], row[["improvement"]]))
     })
   }
 } else {
-  cat("\n(No removal_suggestions.csv file detected. Run the conflict analyzer stage to explore removals.)\n")
+  cat("\n(No trade_proposals.csv file detected. Run the conflict analyzer stage to generate it.)\n")
 }
 
-contact_file <- "students_to_contact.csv"
-if (file.exists(contact_file)) {
-  outreach <- read_csv(contact_file, show_col_types = FALSE)
-  cat("\nStudents needing follow-up: \n")
-  cat(sprintf("  %d students have feasible reassignment plans.\n", nrow(outreach)))
-  apply(head(outreach, 5), 1, function(row) {
-    cat(sprintf(
-      "  %s: best drop %s → slots %s (options: %s)\n",
-      row[["student_id"]], row[["top_drop"]], row[["best_slots_needed"]],
-      ifelse(is.na(row[["top_alternatives"]]) || nchar(row[["top_alternatives"]]) == 0,
-             "--", row[["top_alternatives"]])
-    ))
-  })
+execution_file <- "trade_execution_template.csv"
+if (file.exists(execution_file)) {
+  execution_log <- read_csv(execution_file, show_col_types = FALSE)
+  executed_trades <- execution_log %>%
+    filter(!is.na(executed) & executed == TRUE)
+  approved_pending <- execution_log %>%
+    filter((!is.na(approved) & approved == TRUE) & (is.na(executed) | executed == FALSE))
+
+  cat("\n--- Trade Execution Status ---\n")
+  cat(sprintf("Executed trades logged: %d\n", nrow(executed_trades)))
+  if (nrow(executed_trades) > 0) {
+    apply(head(executed_trades, 5), 1, function(row) {
+      cat(sprintf("  Student %s: replaced %s with %s (notes: %s)\n",
+                  row[["student_id"]], row[["drop_club"]],
+                  row[["alternative_club"]], row[["notes"]]))
+    })
+  }
+
+  if (nrow(approved_pending) > 0) {
+    cat(sprintf("Pending execution (approved but not executed): %d\n",
+                nrow(approved_pending)))
+  }
+
+  cat(sprintf("Review or update the trade log in: %s\n", execution_file))
 } else {
-  cat("\n(No students_to_contact.csv file detected. Check the analyzer output.)\n")
+  cat("\n(No trade execution log found. Use trade_execution_template.csv to track approved/complete swaps.)\n")
 }
 
 cat("\nPipeline complete. Review generated CSV files for detailed results.\n")
