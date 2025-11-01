@@ -1,0 +1,131 @@
+student_id,clubs_assigned,num_clubs,hours_assigned
+5597,"Berlin, Munich, Thessaloniki, Riga, Belfast",5,10
+5598,"Belgrade, Bucharest, Nicosia, Venice, Oslo",5,10
+5599,"Berlin, Ljubljana, Valletta, Milan, Geneva",5,10
+5600,"Warsaw, Nicosia, Zurich, Dublin, Chisinau",5,10
+5601,"Munich, Budapest, Belgrade, Zurich, Skopje",5,10
+5602,"Amsterdam, Zagreb, Zurich, Vilnius, Vaduz",5,10
+5603,"Berlin, Venice, Helsinki, London, Manchester",5,10
+5604,"Prague, Zagreb, Helsinki, Sarajevo, Skopje",5,10
+5605,"Berlin, Ljubljana, Nicosia, Luxembourg City, Skopje",5,10
+5606,"Marseille, Valletta, Rome, Edinburgh, Tirana",5,10
+5607,"Bratislava, Bucharest, Valletta, Dublin, Chisinau",5,10
+5608,"Marseille, Amsterdam, Sofia, Rome, Helsinki",5,10
+5609,"Amsterdam, Rotterdam, Bratislava, Ljubljana, Zagreb",5,10
+5610,"Lyon, Belgrade, Riga, Reykjavik, Tirana",5,10
+5611,"Lyon, Krakow, Zurich, Stockholm, Vilnius",5,10
+5612,"Sofia, Valletta, Oslo, Riga, Luxembourg City",5,10
+5613,"Lyon, Munich, Vienna, Prague, Bucharest",5,10
+5614,"Munich, Warsaw, Geneva, Tallinn, Vaduz",5,10
+5615,"Lyon, Budapest, Bratislava, Ljubljana, Luxembourg City",5,10
+5616,"Venice, Tallinn, Dublin, Andorra la Vella, Sarajevo",5,10
+5617,"Ljubljana, Turin, Helsinki, Glasgow, Vaduz",5,10
+5618,"Barcelona, Munich, Sofia, Helsinki",4,10
+5619,"Rotterdam, Berlin, Sofia, Milan, Dublin",5,10
+5620,"Nicosia, Zurich, Stockholm, Dublin, Birmingham",5,10
+5621,"Prague, Warsaw, Bratislava, Ljubljana, Venice",5,10
+5622,"Lisbon, Lyon, Stockholm, Luxembourg City",4,10
+5623,"Marseille, Berlin, Oslo, Helsinki, Luxembourg City",5,10
+5624,"Lyon, Brussels, Ljubljana, Andorra la Vella, Skopje",5,10
+5625,"Zagreb, Belgrade, Bucharest, Venice, Luxembourg City",5,10
+5626,"Helsinki, Tallinn, Reykjavik, Andorra la Vella, Chisinau",5,10
+5627,"Vienna, Thessaloniki, Zurich, Oslo, Sarajevo",5,10
+5629,"Amsterdam, Krakow, Sofia, Geneva, Tallinn",5,10
+5630,"Lisbon, Nicosia, Stockholm, Dublin",4,10
+5631,"Warsaw, Belgrade, Turin, Reykjavik, Skopje",5,10
+5633,"Brussels, Budapest, Krakow, Turin, Riga",5,10
+5634,"Lyon, Ljubljana, Edinburgh, Manchester, Chisinau",5,10
+5635,"Rotterdam, Vienna, San Marino, Sarajevo, Skopje",5,10
+5636,"Lyon, Brussels, Warsaw, Manchester, Skopje",5,10
+5637,"Budapest, Bratislava, Dublin, Manchester, Skopje",5,10
+5638,"Lisbon, Munich, Vienna, Prague",4,10
+5639,"Rotterdam, Ljubljana, Nicosia, Zurich, Sarajevo",5,10
+5640,"Lyon, Florence, Vaduz, Sarajevo, Tirana",5,10
+5641,"Berlin, Munich, Budapest, Valletta, Rome",5,10
+5642,"Berlin, Prague, Florence, Edinburgh, San Marino",5,10
+5643,"Amsterdam, Rotterdam, Munich, Dublin, Luxembourg City",5,10
+5644,"Bratislava, Rome, Tallinn, Riga, Manchester",5,10
+5645,"Prague, Sofia, Turin, Luxembourg City, Chisinau",5,10
+5646,"Lisbon, Warsaw, Geneva, Chisinau",4,10
+5647,"Belgrade, Thessaloniki, Riga, Vaduz, Tirana",5,10
+5648,"Budapest, Krakow, Bucharest, Vilnius, Dublin",5,10
+5650,"Amsterdam, Thessaloniki, Rome, Birmingham, San Marino",5,10
+5651,"Brussels, Bucharest, Valletta, Tallinn, Riga",5,10
+5652,"Krakow, Zagreb, Valletta, Rome, Edinburgh",5,10
+5653,"Thessaloniki, Zurich, Stockholm, Belfast, Sarajevo",5,10
+5654,"Bratislava, Sofia, Thessaloniki, Birmingham, Tirana",5,10
+5655,"Belgrade, Bucharest, Milan, Helsinki, London",5,10
+5656,"Warsaw, Tallinn, Riga, Vilnius, Dublin",5,10
+5657,"Lisbon, Bratislava, Bucharest, Belfast",4,10
+5658,"Amsterdam, Bratislava, Valletta, Florence, Glasgow",5,10
+5659,"Marseille, Berlin, Munich, Florence, Vaduz",5,10
+5660,"Vienna, Krakow, Bratislava, Rome, Zurich",5,10
+5661,"Vienna, Sofia, Valletta, Milan, Oslo",5,10
+5662,"Brussels, Milan, Helsinki, Dublin, Andorra la Vella",5,10
+5663,"Turin, Belfast, Edinburgh, San Marino, Vaduz",5,10
+5664,"Vienna, Rome, Reykjavik, Skopje, Tirana",5,10
+5665,"Geneva, Glasgow, London, Skopje, Tirana",5,10
+5666,"Rotterdam, Sofia, Belfast, Edinburgh, San Marino",5,10
+5667,"Lisbon, Brussels, Nicosia, Venice",4,10
+5668,"Turin, Geneva, Riga, Birmingham, Luxembourg City",5,10
+5669,"Amsterdam, Munich, Thessaloniki, Tallinn, Glasgow",5,10
+5670,"Vienna, Turin, Venice, Tallinn, Birmingham",5,10
+5671,"Bucharest, Rome, Belfast, Birmingham, Andorra la Vella",5,10
+5672,"Warsaw, Turin, Helsinki, Reykjavik, Vaduz",5,10
+5673,"Vienna, Nicosia, Florence, Oslo, Helsinki",5,10
+5674,"Brussels, Nicosia, Rome, Turin, Edinburgh",5,10
+5675,"Krakow, Thessaloniki, Glasgow, San Marino, Vaduz",5,10
+5676,"Marseille, Munich, Vienna, Milan, Chisinau",5,10
+5677,"Lyon, Munich, Zagreb, Milan, Turin",5,10
+5678,"Marseille, Munich, Bucharest, San Marino, Sarajevo",5,10
+5679,"Brussels, Budapest, Thessaloniki, Helsinki, Dublin",5,10
+5680,"Budapest, Vilnius, Reykjavik, Andorra la Vella, Skopje",5,10
+5681,"Prague, Nicosia, Geneva, Luxembourg City, Chisinau",5,10
+5682,"Budapest, Ljubljana, Riga, Vaduz, Skopje",5,10
+5683,"Lisbon, Berlin, Riga, Glasgow",4,10
+5684,"Marseille, Riga, Vilnius, London, Sarajevo",5,10
+5685,"Lisbon, Lyon, Munich, Nicosia, Zagreb",5,12
+5686,"Prague, Thessaloniki, Valletta, Geneva, Vaduz",5,10
+5687,"Amsterdam, Berlin, Ljubljana, Manchester, Luxembourg City",5,10
+5688,"Munich, Valletta, London, Luxembourg City, Tirana",5,10
+5689,"Prague, Sofia, Helsinki, Riga, Chisinau",5,10
+5690,"Marseille, Warsaw, Zurich, Vilnius, Vaduz",5,10
+5692,"Zagreb, Nicosia, Stockholm, Helsinki, Belfast",5,10
+5693,"Marseille, Amsterdam, Rotterdam, Edinburgh, Sarajevo",5,10
+5694,"Rotterdam, Bratislava, Florence, Belfast, Manchester",5,10
+5695,"Thessaloniki, Nicosia, Oslo, Riga, Reykjavik",5,10
+5696,"Munich, Bratislava, Bucharest, London, Andorra la Vella",5,10
+5697,"Amsterdam, Milan, Venice, Riga, Glasgow",5,10
+5698,"Amsterdam, Budapest, Bratislava, Ljubljana, Vaduz",5,10
+5699,"Vienna, Krakow, Stockholm, Belfast, San Marino",5,10
+5700,"Belgrade, Milan, Florence, Geneva, Edinburgh",5,10
+5701,"Milan, Turin, Venice, Stockholm, Birmingham",5,10
+5702,"Brussels, Berlin, Turin, Geneva, Zurich",5,10
+5703,"Amsterdam, Prague, Geneva, Riga, Birmingham",5,10
+5704,"Brussels, Thessaloniki, Tallinn, San Marino, Chisinau",5,10
+5705,"Lisbon, Budapest, Vilnius, Glasgow",4,10
+5706,"Turin, Oslo, Riga, Luxembourg City, Skopje",5,10
+5707,"Rotterdam, Belgrade, Florence, Helsinki, Sarajevo",5,10
+5708,"Amsterdam, Turin, Oslo, Stockholm, Luxembourg City",5,10
+5709,"Lyon, Nicosia, Glasgow, Andorra la Vella, Chisinau",5,10
+5710,"Lyon, Bratislava, Zagreb, Thessaloniki, Birmingham",5,10
+5711,"Florence, Stockholm, Tallinn, Vilnius, Skopje",5,10
+5712,"Berlin, Munich, Thessaloniki, Geneva, Manchester",5,10
+5713,"Vienna, Nicosia, Manchester, Luxembourg City, Chisinau",5,10
+5714,"Munich, Sofia, Rome, Edinburgh, London",5,10
+5715,"Budapest, Ljubljana, Andorra la Vella, San Marino, Tirana",5,10
+5716,"Oslo, London, Manchester, Reykjavik, Skopje",5,10
+5717,"Vienna, Belgrade, Stockholm, Vilnius, Glasgow",5,10
+5719,"Krakow, Valletta, Zurich, Reykjavik, Chisinau",5,10
+5720,"Zagreb, Bucharest, Milan, Vilnius, Manchester",5,10
+5721,"Rotterdam, Warsaw, Glasgow, Manchester, Birmingham",5,10
+5722,"Warsaw, Krakow, Bratislava, Zurich, London",5,10
+5724,"Lisbon, Vilnius, Dublin, Belfast",4,10
+5725,"Munich, Warsaw, Bucharest, Tallinn, Luxembourg City",5,10
+5726,"Rotterdam, Prague, Warsaw, Venice, Birmingham",5,10
+5727,"Marseille, Sofia, Riga, Belfast, Chisinau",5,10
+5728,"Bratislava, Geneva, Edinburgh, Reykjavik, Chisinau",5,10
+5729,"Lisbon, Florence, Oslo, Tirana",4,10
+5733,"Zurich, Vilnius, Andorra la Vella, Vaduz, Skopje",5,10
+5734,"Lisbon, Vienna, London, Luxembourg City",4,10
+5735,"Amsterdam, Prague, Zurich, San Marino, Sarajevo",5,10

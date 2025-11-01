@@ -1,0 +1,16 @@
+student_id,conflict_club_a,conflict_club_b,keep_club,keep_club_rank,drop_club,drop_club_rank,alternative_club,alternative_club_id,alternative_rank,hours_maintained,improvement
+5635,Rotterdam,Sarajevo,Sarajevo,2,Rotterdam,6,Athens,club024,5,2,1
+5707,Rotterdam,Sarajevo,Sarajevo,2,Rotterdam,6,Milan,club029,5,2,1
+5659,Berlin,Munich,Berlin,4,Munich,7,Milan,club029,5,2,2
+5725,Munich,Bucharest,Bucharest,2,Munich,6,Andorra la Vella,club052,5,2,1
+5682,Budapest,Ljubljana,Budapest,1,Ljubljana,7,Belfast,club043,6,2,1
+5637,Budapest,Skopje,Skopje,4,Budapest,6,Athens,club024,5,2,1
+5681,Nicosia,Chisinau,Chisinau,1,Nicosia,3,Monaco,club051,2,2,1
+5709,Nicosia,Chisinau,Nicosia,2,Chisinau,7,Brussels,club007,6,2,1
+5674,Rome,Edinburgh,Edinburgh,2,Rome,6,Monaco,club051,4,2,2
+5645,Turin,Luxembourg City,Turin,1,Luxembourg City,6,Athens,club024,4,2,2
+5735,Zurich,Sarajevo,Zurich,1,Sarajevo,5,Copenhagen,club037,4,2,1
+5677,Lyon,Zagreb,Lyon,4,Zagreb,8,Oslo,club035,6,2,2
+5677,Lyon,Zagreb,Lyon,4,Zagreb,8,Sarajevo,club055,7,2,1
+5659,Marseille,Munich,Marseille,3,Munich,7,Milan,club029,5,2,2
+5684,Marseille,Sarajevo,Marseille,3,Sarajevo,7,Monaco,club051,6,2,1

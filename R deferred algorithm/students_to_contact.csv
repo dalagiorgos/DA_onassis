@@ -1,0 +1,14 @@
+student_id,num_conflicts,num_alternatives,best_alternative,best_alternative_rank
+5659,2,2,Milan,5
+5635,1,1,Athens,5
+5637,1,1,Athens,5
+5645,1,1,Athens,4
+5674,1,1,Monaco,4
+5677,1,2,Oslo,6
+5681,1,1,Monaco,2
+5682,1,1,Belfast,6
+5684,1,1,Monaco,6
+5707,1,1,Milan,5
+5709,1,1,Brussels,6
+5725,1,1,Andorra la Vella,5
+5735,1,1,Copenhagen,4
