@@ -1,17 +1,18 @@
 # schedule_conflict_resolver.R
-# Identifies students causing conflicts and proposes trades
+# Identifies students causing conflicts and evaluates removal scenarios
 
 library(dplyr)
 library(readr)
 library(tidyr)
 library(stringr)
+library(igraph)
 
 # --- Settings ---
 assignments_file <- "club_assignments_DA_final.csv"
 clubs_file <- "clubs.csv"
 responses_file <- "responses.csv"
 
-cat("=== SCHEDULE CONFLICT ANALYZER & TRADE PROPOSER ===\n\n")
+cat("=== SCHEDULE CONFLICT ANALYZER & REMOVAL PLANNER ===\n\n")
 
 # --- 1. Load Data ---
 assignments <- read_csv(assignments_file, show_col_types = FALSE)
@@ -27,12 +28,24 @@ if("hours_per_week" %in% colnames(clubs)) {
 student_col <- colnames(assignments)[1]
 colnames(responses) <- c(student_col, tolower(trimws(colnames(responses)[-1])))
 
+assignments <- assignments %>%
+  rename(student_id = all_of(student_col))
+
+responses <- responses %>%
+  rename(student_id = all_of(student_col))
+
+student_col <- "student_id"
+
 # Get student preferences in long format
 student_preferences <- responses %>%
   pivot_longer(cols = -all_of(student_col),
                names_to = "club_id",
                values_to = "student_rank") %>%
-  mutate(club_id = trimws(tolower(club_id)))
+  mutate(
+    club_id = trimws(tolower(club_id)),
+    student_rank = suppressWarnings(as.numeric(student_rank))
+  ) %>%
+  left_join(clubs %>% select(club_id, club_name, hours), by = "club_id")
 
 # --- 2. Identify All Conflicts ---
 cat("Analyzing scheduling conflicts...\n\n")
@@ -55,7 +68,7 @@ club_conflicts <- assignments %>%
   group_by(club_id.x, club_id.y, club_name_x, club_name_y, hours_x, hours_y) %>%
   summarise(
     num_shared_students = n(),
-    shared_students = list(unique(get(student_col))),
+    shared_students = list(unique(student_id)),
     .groups = 'drop'
   ) %>%
   arrange(desc(num_shared_students))
@@ -88,218 +101,276 @@ if (nrow(high_priority) > 0) {
   cat("✓ No high-priority conflicts found!\n\n")
 }
 
-# --- 4. For Each Conflict, Propose Trades ---
-cat("=== TRADE PROPOSALS ===\n\n")
+# --- 4. Removal-based feasibility exploration ---
+cat("=== REMOVAL SCENARIO ANALYSIS ===\n\n")
 
-trade_proposals <- tibble()
+club_lookup <- clubs %>%
+  select(club_id, club_name, hours)
 
-for (i in 1:min(20, nrow(club_conflicts))) {
-  conflict <- club_conflicts[i,]
-  
-  club_a <- conflict$club_id.x
-  club_b <- conflict$club_id.y
-  club_a_name <- conflict$club_name_x
-  club_b_name <- conflict$club_name_y
-  shared_students <- unlist(conflict$shared_students)
-  
-  # For each shared student, analyze their preferences
-  for (student in shared_students) {
-    
-    # Get student's current clubs and hours
-    student_clubs <- assignments %>%
-      filter(get(student_col) == student) %>%
-      left_join(clubs %>% select(club_id, club_name, hours), by = "club_id")
-    
-    total_hours <- sum(student_clubs$hours)
-    
-    # Get student's rankings for these two conflicting clubs
-    rankings <- student_preferences %>%
-      filter(get(student_col) == student,
-             club_id %in% c(club_a, club_b)) %>%
-      arrange(student_rank)
-    
-    preferred_club <- rankings$club_id[1]
-    preferred_rank <- rankings$student_rank[1]
-    less_preferred_club <- rankings$club_id[2]
-    less_preferred_rank <- rankings$student_rank[2]
-    
-    preferred_club_name <- if(preferred_club == club_a) club_a_name else club_b_name
-    less_preferred_club_name <- if(less_preferred_club == club_a) club_a_name else club_b_name
-    
-    # Get club hours
-    less_preferred_hours <- clubs %>% 
-      filter(club_id == less_preferred_club) %>% 
-      pull(hours)
-    
-    # Find alternative clubs student could take instead of less-preferred
-    alternatives <- student_preferences %>%
-      filter(
-        get(student_col) == student,
-        student_rank < less_preferred_rank,  # Better than current less-preferred
-        student_rank > preferred_rank,       # Worse than most preferred
-        !club_id %in% student_clubs$club_id  # Not already in this club
-      ) %>%
-      left_join(clubs %>% select(club_id, club_name, hours), by = "club_id") %>%
-      # Must have same hours to maintain 10 total
-      filter(hours == less_preferred_hours) %>%
-      arrange(student_rank) %>%
-      head(5)
-    
-    if (nrow(alternatives) > 0) {
-      # Propose trade
-      for (j in 1:nrow(alternatives)) {
-        alt <- alternatives[j,]
-        
-        trade_proposals <- trade_proposals %>%
+student_pairs <- assignments %>%
+  select(student_id, club_id) %>%
+  inner_join(
+    assignments %>% select(student_id, club_id),
+    by = "student_id",
+    relationship = "many-to-many"
+  ) %>%
+  filter(club_id.x < club_id.y)
+
+conflict_counts <- student_pairs %>%
+  group_by(club_id.x, club_id.y) %>%
+  summarise(num_shared_students = n(), .groups = 'drop') %>%
+  mutate(key = paste(club_id.x, club_id.y, sep = "__"))
+
+vertices <- unique(assignments$club_id)
+
+build_graph_from_counts <- function(counts, vertices) {
+  if (length(vertices) == 0) {
+    return(make_empty_graph())
+  }
+
+  if (nrow(counts) > 0) {
+    graph_from_data_frame(
+      counts %>% select(club_id.x, club_id.y),
+      directed = FALSE,
+      vertices = vertices
+    )
+  } else {
+    g <- make_empty_graph(n = length(vertices), directed = FALSE)
+    V(g)$name <- vertices
+    g
+  }
+}
+
+conflict_graph <- build_graph_from_counts(conflict_counts, vertices)
+
+baseline_colors <- if (vcount(conflict_graph) > 0) {
+  coloring <- greedy_vertex_coloring(conflict_graph)
+  length(unique(coloring))
+} else {
+  0
+}
+
+cat(sprintf("Baseline greedy coloring requires %d time slots.\n", baseline_colors))
+
+student_conflict_pairs <- student_pairs %>%
+  group_by(student_id) %>%
+  summarise(conflict_pairs = n(), .groups = 'drop') %>%
+  arrange(desc(conflict_pairs))
+
+if (nrow(student_conflict_pairs) == 0) {
+  cat("No students create scheduling conflicts.\n")
+} else {
+  cat("Students contributing most to conflicts:\n")
+  for (i in 1:min(15, nrow(student_conflict_pairs))) {
+    entry <- student_conflict_pairs[i,]
+    cat(sprintf("  %s → %d conflict pairs\n", entry$student_id, entry$conflict_pairs))
+  }
+}
+
+club_degree <- conflict_counts %>%
+  select(club_id.x, club_id.y) %>%
+  pivot_longer(cols = c(club_id.x, club_id.y),
+               names_to = "edge_end",
+               values_to = "club_id") %>%
+  group_by(club_id) %>%
+  summarise(conflict_degree = n(), .groups = 'drop') %>%
+  right_join(club_lookup, by = "club_id") %>%
+  mutate(conflict_degree = replace_na(conflict_degree, 0)) %>%
+  arrange(desc(conflict_degree))
+
+low_conflict_cutoff <- if (nrow(club_degree) > 0) {
+  as.numeric(stats::quantile(club_degree$conflict_degree, probs = 0.4, na.rm = TRUE))
+} else {
+  0
+}
+
+simulate_removal <- function(student_id, drop_club, conflict_counts, student_pairs, vertices) {
+  relevant_pairs <- student_pairs %>%
+    filter(student_id == !!student_id,
+           club_id.x == drop_club | club_id.y == drop_club) %>%
+    mutate(
+      key = paste(pmin(club_id.x, club_id.y), pmax(club_id.x, club_id.y), sep = "__"),
+      other_club = if_else(club_id.x == drop_club, club_id.y, club_id.x)
+    )
+
+  if (nrow(relevant_pairs) == 0) {
+    return(NULL)
+  }
+
+  reductions <- relevant_pairs %>%
+    group_by(key) %>%
+    summarise(reduction = n(), .groups = 'drop')
+
+  adjusted <- conflict_counts %>%
+    left_join(reductions, by = "key") %>%
+    mutate(
+      reduction = replace_na(reduction, 0L),
+      remaining = pmax(0L, num_shared_students - reduction)
+    )
+
+  resolved_keys <- adjusted %>%
+    filter(remaining == 0 & reduction > 0) %>%
+    pull(key)
+
+  remaining_counts <- adjusted %>%
+    filter(remaining > 0) %>%
+    transmute(club_id.x, club_id.y, num_shared_students = remaining, key)
+
+  graph_after <- build_graph_from_counts(remaining_counts, vertices)
+
+  colors_after <- if (vcount(graph_after) > 0) {
+    coloring <- greedy_vertex_coloring(graph_after)
+    length(unique(coloring))
+  } else {
+    0
+  }
+
+  list(
+    colors = colors_after,
+    remaining_counts = remaining_counts,
+    resolved_keys = resolved_keys,
+    pairs_reduced = sum(reductions$reduction)
+  )
+}
+
+suggest_alternatives <- function(student_id, drop_club, drop_hours,
+                                 preferences, assignments, club_degree,
+                                 low_conflict_cutoff, limit = 5) {
+  current_clubs <- assignments %>%
+    filter(student_id == !!student_id) %>%
+    pull(club_id)
+
+  alternatives <- preferences %>%
+    filter(student_id == !!student_id,
+           !is.na(student_rank),
+           club_id != drop_club,
+           !club_id %in% current_clubs,
+           hours == drop_hours) %>%
+    left_join(club_degree %>% select(club_id, conflict_degree), by = "club_id") %>%
+    mutate(conflict_degree = replace_na(conflict_degree, 0)) %>%
+    arrange(conflict_degree, student_rank)
+
+  if (nrow(alternatives) == 0) {
+    return(character(0))
+  }
+
+  preferred <- alternatives %>%
+    filter(conflict_degree <= low_conflict_cutoff)
+
+  if (nrow(preferred) == 0) {
+    preferred <- head(alternatives, limit)
+  } else {
+    preferred <- head(preferred, limit)
+  }
+
+  sprintf("%s (rank %s, conflicts %d)",
+          preferred$club_name,
+          preferred$student_rank,
+          preferred$conflict_degree)
+}
+
+removal_scenarios <- tibble()
+students_to_review <- student_conflict_pairs %>%
+  filter(conflict_pairs > 0)
+
+if (nrow(students_to_review) > 0) {
+  for (student in students_to_review$student_id) {
+    student_assignments <- assignments %>%
+      filter(student_id == !!student)
+
+    for (drop_club in student_assignments$club_id) {
+      drop_info <- club_lookup %>% filter(club_id == drop_club)
+
+      sim <- simulate_removal(student, drop_club, conflict_counts, student_pairs, vertices)
+
+      if (is.null(sim)) {
+        next
+      }
+
+      if (sim$colors <= 10) {
+        freed_clubs <- student_pairs %>%
+          filter(student_id == !!student,
+                 club_id.x == drop_club | club_id.y == drop_club) %>%
+          mutate(
+            key = paste(pmin(club_id.x, club_id.y), pmax(club_id.x, club_id.y), sep = "__"),
+            other_club = if_else(club_id.x == drop_club, club_id.y, club_id.x)
+          ) %>%
+          filter(key %in% sim$resolved_keys) %>%
+          distinct(other_club) %>%
+          left_join(club_lookup, by = c("other_club" = "club_id")) %>%
+          pull(club_name)
+
+        alternatives <- suggest_alternatives(
+          student_id = student,
+          drop_club = drop_club,
+          drop_hours = drop_info$hours[1],
+          preferences = student_preferences,
+          assignments = assignments,
+          club_degree = club_degree,
+          low_conflict_cutoff = low_conflict_cutoff
+        )
+
+        slot_improvement <- baseline_colors - sim$colors
+
+        removal_scenarios <- removal_scenarios %>%
           bind_rows(tibble(
             student_id = student,
-            conflict_club_a = club_a_name,
-            conflict_club_b = club_b_name,
-            keep_club = preferred_club_name,
-            keep_club_rank = preferred_rank,
-            drop_club = less_preferred_club_name,
-            drop_club_rank = less_preferred_rank,
-            alternative_club = alt$club_name,
-            alternative_club_id = alt$club_id,
-            alternative_rank = alt$student_rank,
-            hours_maintained = less_preferred_hours,
-            improvement = less_preferred_rank - alt$student_rank
+            drop_club_id = drop_club,
+            drop_club_name = drop_info$club_name[1],
+            drop_hours = drop_info$hours[1],
+            conflicts_resolved = length(freed_clubs),
+            conflict_pairs_before = student_conflict_pairs$conflict_pairs[student_conflict_pairs$student_id == student],
+            slots_needed_after = sim$colors,
+            slot_improvement = slot_improvement,
+            freed_clubs = ifelse(length(freed_clubs) > 0, paste(freed_clubs, collapse = "; "), ""),
+            suggested_alternatives = ifelse(length(alternatives) > 0, paste(alternatives, collapse = "; "), "")
           ))
       }
     }
   }
 }
 
-# --- 5. Display Best Trade Proposals ---
-if (nrow(trade_proposals) > 0) {
-  
-  cat("Found trade proposals to resolve conflicts:\n\n")
-  
-  # Sort by improvement (most improvement first)
-  best_trades <- trade_proposals %>%
-    arrange(desc(improvement)) %>%
-    head(20)
-  
-  for (i in 1:nrow(best_trades)) {
-    trade <- best_trades[i,]
-    
-    cat(sprintf("TRADE PROPOSAL #%d:\n", i))
-    cat(sprintf("  Student: %s\n", trade$student_id))
-    cat(sprintf("  Problem: '%s' conflicts with '%s'\n",
-                trade$conflict_club_a, trade$conflict_club_b))
-    cat(sprintf("  Student prefers: '%s' (ranked #%d)\n",
-                trade$keep_club, trade$keep_club_rank))
-    cat(sprintf("  Student less prefers: '%s' (ranked #%d)\n",
-                trade$drop_club, trade$drop_club_rank))
-    cat(sprintf("  → PROPOSE: Switch '%s' to '%s' (ranked #%d)\n",
-                trade$drop_club, trade$alternative_club, trade$alternative_rank))
-    cat(sprintf("  Benefit: Student moves UP %d positions in preference\n",
-                trade$improvement))
-    cat(sprintf("  Hours: %d → %d (maintained)\n\n",
-                trade$hours_maintained, trade$hours_maintained))
-  }
-  
-  # --- 6. Save Trade Proposals ---
-  write_csv(trade_proposals, "trade_proposals.csv")
-  cat("✓ All trade proposals saved to: trade_proposals.csv\n\n")
-  
-  # --- 7. Conflict Resolution Summary ---
-  cat("=== CONFLICT RESOLUTION SUMMARY ===\n\n")
-  
-  # How many conflicts can be resolved?
-  resolvable_conflicts <- trade_proposals %>%
-    select(conflict_club_a, conflict_club_b, student_id) %>%
-    distinct() %>%
-    group_by(conflict_club_a, conflict_club_b) %>%
-    summarise(students_with_trades = n(), .groups = 'drop')
-  
-  conflicts_with_solutions <- club_conflicts %>%
-    left_join(
-      resolvable_conflicts,
-      by = c("club_name_x" = "conflict_club_a", "club_name_y" = "conflict_club_b")
-    ) %>%
-    replace_na(list(students_with_trades = 0)) %>%
-    mutate(
-      pct_resolvable = students_with_trades / num_shared_students * 100
-    ) %>%
-    filter(students_with_trades > 0) %>%
-    arrange(desc(pct_resolvable))
-  
-  cat(sprintf("Conflicts with possible trades: %d / %d\n",
-              nrow(conflicts_with_solutions), nrow(club_conflicts)))
-  
-  if (nrow(conflicts_with_solutions) > 0) {
-    cat("\nTop resolvable conflicts:\n")
-    for (i in 1:min(10, nrow(conflicts_with_solutions))) {
-      conf <- conflicts_with_solutions[i,]
-      cat(sprintf("  %s ↔ %s: %d/%d students (%.0f%%)\n",
-                  conf$club_name_x, conf$club_name_y,
-                  conf$students_with_trades, conf$num_shared_students,
-                  conf$pct_resolvable))
+if (nrow(removal_scenarios) > 0) {
+  removal_scenarios <- removal_scenarios %>%
+    arrange(slots_needed_after, desc(conflicts_resolved), desc(slot_improvement))
+
+  cat(sprintf("Found %d feasible single removals that lead to ≤10 slots.\n",
+              nrow(removal_scenarios)))
+
+  cat("\nTop recommendations:\n")
+  for (i in 1:min(10, nrow(removal_scenarios))) {
+    plan <- removal_scenarios[i,]
+    cat(sprintf("  Student %s → drop %s (%s) → colors: %d\n",
+                plan$student_id, plan$drop_club_name, plan$drop_club_id,
+                plan$slots_needed_after))
+    if (nzchar(plan$freed_clubs)) {
+      cat(sprintf("    Frees conflicts with: %s\n", plan$freed_clubs))
+    }
+    if (nzchar(plan$suggested_alternatives)) {
+      cat(sprintf("    Suggested new clubs: %s\n", plan$suggested_alternatives))
     }
   }
-  
-  # --- 8. Generate Student Contact List ---
-  cat("\n\n=== STUDENTS TO CONTACT ===\n\n")
-  
-  students_to_contact <- trade_proposals %>%
+
+  write_csv(removal_scenarios, "removal_suggestions.csv")
+  cat("\n✓ Removal suggestions saved to: removal_suggestions.csv\n")
+
+  students_to_contact <- removal_scenarios %>%
     group_by(student_id) %>%
     summarise(
-      num_conflicts = n_distinct(paste(conflict_club_a, conflict_club_b)),
-      num_alternatives = n(),
-      best_alternative = first(alternative_club),
-      best_alternative_rank = first(alternative_rank),
+      options = n(),
+      best_slot_improvement = max(slot_improvement),
+      best_slots_needed = min(slots_needed_after),
+      top_drop = drop_club_name[which.min(slots_needed_after)],
+      top_alternatives = first(suggested_alternatives[suggested_alternatives != ""]),
       .groups = 'drop'
     ) %>%
-    arrange(desc(num_conflicts))
-  
-  cat(sprintf("Total students with trade options: %d\n\n", nrow(students_to_contact)))
-  
-  cat("Priority students (most conflicts):\n")
-  for (i in 1:min(15, nrow(students_to_contact))) {
-    student <- students_to_contact[i,]
-    cat(sprintf("  Student %s: %d conflicts, %d alternatives available\n",
-                student$student_id, student$num_conflicts, student$num_alternatives))
-  }
-  
+    arrange(best_slots_needed, desc(best_slot_improvement))
+
   write_csv(students_to_contact, "students_to_contact.csv")
-  cat("\n✓ Student contact list saved to: students_to_contact.csv\n")
-  
-  # --- 9. Create Trade Execution Script ---
-  cat("\n\n=== AUTOMATED TRADE EXECUTION ===\n\n")
-  
-  # Create a template for administrators to approve trades
-  execution_template <- trade_proposals %>%
-    mutate(
-      approved = NA,
-      executed = NA,
-      notes = ""
-    ) %>%
-    select(
-      student_id, 
-      drop_club, 
-      alternative_club, 
-      improvement,
-      approved,
-      executed,
-      notes
-    )
-  
-  write_csv(execution_template, "trade_execution_template.csv")
-  
-  cat("Trade execution template created: trade_execution_template.csv\n")
-  cat("\nTo execute trades:\n")
-  cat("  1. Review trade_proposals.csv\n")
-  cat("  2. Mark 'approved = TRUE' in trade_execution_template.csv\n")
-  cat("  3. Contact students to confirm their agreement\n")
-  cat("  4. Run trade executor script (to be created)\n")
-  
+  cat("✓ Student outreach list saved to: students_to_contact.csv\n")
 } else {
-  cat("No viable trades found. Conflicts may be irresolvable through trades alone.\n")
-  cat("\nConsider:\n")
-  cat("  - Adding more time slots (evenings, weekends)\n")
-  cat("  - Splitting popular clubs into multiple sections\n")
-  cat("  - Re-running assignment with scheduling constraints\n")
+  cat("No single student removals reduced the schedule to 10 slots or fewer.\n")
+  cat("Consider exploring multi-student adjustments or increasing time slots.\n")
 }
 
 cat("\n✓ Analysis complete.\n")
